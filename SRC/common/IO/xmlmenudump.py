@@ -244,7 +244,7 @@ def addSection(callback, ordering):
 ###################
 
 def dumpMenu(phile, menu, toplevel):
-    if menu.getOption('no_doc') or menu.secret:
+    if menu.getOption('no_doc'): # or menu.secret:
         return
     path = menu.path()
     if not toplevel:
@@ -374,7 +374,9 @@ def dumpMenuItem(phile, menuitem):
         print("  </simpara></listitem>", file=phile)
 
     # Menu items are enabled and disabled dynamically, so the current
-    # state of the flag isn't relevant to the documentation.
+    # state of the flag isn't relevant to the documentation. Don't
+    # print options unless the option list contains something other
+    # than "disabled".
     ## TODO: "disabled" shouldn't be an OOFMenuItem option.
     if menuitem.options and list(menuitem.options.keys()) != ['disabled']:
         print("  <listitem><simpara>", file=phile)

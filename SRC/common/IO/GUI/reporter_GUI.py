@@ -70,7 +70,8 @@ class MessageWindow(subWindow.SubWindow):
             linkend="Section-Windows-Messages">Messages Window</link>
             named <quote>Messages_n</quote> to the front.
             </para>""",
-            cli_only=0, no_log=1,
+            no_cli=True,
+            no_log=True,
             gui_callback=self.raise_window) )
             
         MessageWindow.count += 1

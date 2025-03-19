@@ -41,7 +41,7 @@ import sys
 
 ops_menu = oofmenu.OOFMenuItem(
     "Analyze",
-    secret=1,
+    no_gui=True,
     help="Compute properties of the solution.",
     discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/menu/analyze.xml'),
     xrefs=["Section-Tasks-Analysis"]
@@ -231,7 +231,7 @@ else:
 
 namedanalysismenu = mainmenu.OOF.addItem(oofmenu.OOFMenuItem(
     'Named_Analysis',
-    cli_only=1,
+    no_gui=True,
     help="Create analysis operations that can be saved and invoked by name",
     discussion="""<para>
     Giving a name to an analysis operation defined on the <link

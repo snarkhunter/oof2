@@ -39,7 +39,7 @@ def gtkOOFMenu(menu, accelgroup=None, parentwindow=None):
     menu.setOption('accelgroup', accelgroup)
 
     for item in menu:
-        if not (item.secret or item.getOption('cli_only')):
+        if not item.getOption('no_gui'):
             item.construct_gui(menu, new_gtkmenu, accelgroup)
     return base
 
@@ -61,11 +61,21 @@ def gtkOOFMenuBar(menu, bar=None, accelgroup=None, parentwindow=None):
         
     bar.connect("destroy", menu.gtkmenu_destroyed)
     
-    # menu.setOption('accelgroup', accelgroup)
+    menu.setOption('accelgroup', accelgroup)
 
+    debug.fmsg(f"Adding items to {menu.name}")
     for item in menu:
-        if not (item.secret or item.getOption('cli_only')):
-            item.construct_gui(menu, bar, accelgroup)
+        if menu.name == "Graphics_1":
+            debug.fmsg(f"adding {item.name} no_bar={item.getOption('no_bar')} o={item.options} nro={item.nonrecursive_options}")
+        # debug.fmsg(f"name={item.name} no_bar={item.getOption('no_bar')}")
+        # if not item.getOption('no_bar'):
+        #     debug.fmsg(f"Adding {item.name} to menubar {menu.name}")
+        #     debug.fmsg(f"    options={item.options} nro={item.nonrecursive_options}")
+    
+        item.construct_gui(menu, bar, accelgroup)
+        # else:
+        #     debug.fmsg(f"Not adding {item.name}")
+    debug.fmsg("finished menu bar for", menu.name)
     return bar
 
 ###########################
@@ -132,21 +142,27 @@ OOFMenuItem.menuItemName = _menuItemName
 # construction of empty submenus.  Visibility is a GUI thing.
 def _OOFMenuItem_children_visible(self):
     if not self.items:
-        return None
+        return False
     for i in self.items:
-        if not (i.secret or i.getOption('cli_only')):
-            return 1 # Return true on the first visible item.
-    return None # Redundant, None is default return value, but clearer.
+        if not i.getOption('no_gui'):
+            return True       # Return true on the first visible item.
+    return False 
 
 OOFMenuItem.children_visible = _OOFMenuItem_children_visible
     
-def _OOFMenuItem_construct_gui(self, base, parent_menu, accelgroup,
-                               popup=False):
-    # "base" is this menu item's OOF menu parent, and "parent_menu" is
+def _OOFMenuItem_construct_gui(self, base, gtk_parent, accelgroup,
+                               popup=False, verbose=False):
+    # "base" is this menu item's OOF menu parent, and "gtk_parent" is
     # the to-be-constructed GtkMenuItem's gtk container.
     debug.mainthreadTest()
-    if not (self.secret or self.getOption('cli_only')):
-
+    if base.name == "Graphics_1":
+        verbose = True
+        debug.fmsg(f"Adding {self.name} to {base.name=}. {self.nonrecursive_options=}")
+        debug.fmsg(f"{self.getOption('no_bar')=}")
+        debug.fmsg(f"{isinstance(gtk_parent, Gtk.MenuBar)}")
+        
+    if not (self.getOption('no_gui') or (self.getOption('no_bar') and
+                                        isinstance(gtk_parent, Gtk.MenuBar))):
         new_gtkitem = Gtk.MenuItem(label=self.menuItemName()) 
         gtklogger.setWidgetName(new_gtkitem, self.name)
         try:
@@ -155,18 +171,13 @@ def _OOFMenuItem_construct_gui(self, base, parent_menu, accelgroup,
             self.gtkitem = [new_gtkitem]
             
         new_gtkitem.connect("destroy", self.gtkitem_destroyed)
-        
-        parent_menu.insert(new_gtkitem, self.gui_order())
 
-        ## Right justification of help menus is "now considered a bad
-        ## idea" according to the gtk documentation, and
-        ## MenuItem.set_right_justified is deprecated.
-        # if self.help_menu:
-        #     base.gtkhelpmenu = 1
-        #     new_gtkitem.set_right_justified(True)
+        gtk_parent.insert(new_gtkitem, self.gui_order())
 
         if (self.callback is None and self.gui_callback is None 
             and self.children_visible()):
+            # Creating a submenu
+            debug.fmsg(f"Creating submenu {self.name}")
 
             new_gtkmenu = Gtk.Menu()
             try:
@@ -177,7 +188,9 @@ def _OOFMenuItem_construct_gui(self, base, parent_menu, accelgroup,
             gtklogger.set_submenu(new_gtkitem, new_gtkmenu)
             for item in self.items:
                 # recursively construct submenu
-                item.construct_gui(self, new_gtkmenu, accelgroup, popup=popup)
+                debug.fmsg(f"Constructing submenu for {item.name}")
+                item.construct_gui(self, new_gtkmenu, accelgroup, popup=popup, verbose=verbose)
+                debug.fmsg("Created submenu")
         else:                   # no submenu, create command
             gtklogger.connect(
                 new_gtkitem, 'activate', MenuCallBackWrapper(self, popup))
@@ -188,6 +201,8 @@ def _OOFMenuItem_construct_gui(self, base, parent_menu, accelgroup,
                                             Gtk.AccelFlags.VISIBLE)
         if not self.enabled():
             new_gtkitem.set_sensitive(False)
+    else:
+        debug.fmsg(f"{self.name} not added to {base.name}")
 
 OOFMenuItem.construct_gui = _OOFMenuItem_construct_gui
 
@@ -239,7 +254,16 @@ def _newAddItem(self, item):
     return mainthread.runBlock(self.addItem_thread, (item,))
 def _addItem_thread(self, item):
     debug.mainthreadTest()
+    # if item.name == "Console":
+    #     debug.dumpTrace()
+    #     debug.fmsg(f"Adding Console, nro={item.nonrecursive_options}")
+    #     debug.fmsg(f"{self.__class__}")
     _oldAddItem(self, item)
+
+    # If self is a menu bar and the item is marked "no_bar", don't add
+    # the item.
+    
+    
     # Check to see if the gui has been constructed yet. The gui
     # objects for the root of the menu have gtkmenu attributes, but
     # not gtkitem attributes.  Other nodes of the tree have gtkitem,
@@ -300,10 +324,10 @@ class CheckMenuCallBackWrapper(MenuCallBackWrapper):
             gtkmenuitem.get_parent().destroy()
         return self.menuitem(active)
 
-def _CheckOOFMenuItem_construct_gui(self, base, parent_menu, accelgroup,
-                                    popup=False):
+def _CheckOOFMenuItem_construct_gui(self, base, gtk_parent, accelgroup,
+                                    popup=False, verbose=False):
     debug.mainthreadTest()
-    if not (self.secret or self.getOption('cli_only')):
+    if not self.getOption('no_gui'):
         new_gtkitem = Gtk.CheckMenuItem(label=self.menuItemName())
         gtklogger.setWidgetName(new_gtkitem, self.name)
         try:
@@ -334,7 +358,7 @@ def _CheckOOFMenuItem_construct_gui(self, base, parent_menu, accelgroup,
         if not self.enabled():
             new_gtkitem.set_sensitive(False)
 
-        parent_menu.insert(new_gtkitem, self.gui_order())
+        gtk_parent.insert(new_gtkitem, self.gui_order())
 
 CheckOOFMenuItem.construct_gui = _CheckOOFMenuItem_construct_gui
 
@@ -380,8 +404,8 @@ class RadioMenuCallBackWrapper(CheckMenuCallBackWrapper):
             return self.menuitem()
 
 
-def _RadioOOFMenuItem_construct_gui(self, base, parent_menu, accelgroup,
-                                    popup=False):
+def _RadioOOFMenuItem_construct_gui(self, base, gtk_parent, accelgroup,
+                                    popup=False, verbose=False):
     debug.mainthreadTest()
 
     new_gtkitem = Gtk.RadioMenuItem(self.menuItemName())
@@ -419,7 +443,7 @@ def _RadioOOFMenuItem_construct_gui(self, base, parent_menu, accelgroup,
     
     if self.getOption('disabled'):
         new_gtkitem.set_sensitive(0)
-    parent_menu.add(new_gtkitem)
+    gtk_parent.add(new_gtkitem)
 
 RadioOOFMenuItem.construct_gui = _RadioOOFMenuItem_construct_gui
 

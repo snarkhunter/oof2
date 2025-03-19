@@ -45,7 +45,7 @@ import os
 
 orientmapmenu = mainmenu.OOF.addItem(oofmenu.OOFMenuItem(
     'OrientationMap',
-    cli_only=False,
+    #no_gui=False,  # TODO: Check if this is needed.
     help='Commands for working with Orientation Maps.',
     discussion=xmlmenudump.loadFile(
             'DISCUSSIONS/orientationmap/menu/orientmapmenu.xml')

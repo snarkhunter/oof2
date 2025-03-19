@@ -111,6 +111,10 @@ _loadmenu = _filemenu.addItem(OOFMenuItem(
 # they have their own copies of the parameters.  This prevents startup
 # file names from setting the default values of parameters in the load
 # menu.
+
+## TODO: This menu needs to be secret, so that it doesn't appear in
+## the GUI, but it *should* appear in the manual.  The 'secret'
+## keyword is overloaded poorly.
 _startupmenu = _filemenu.addItem(OOFMenuItem(
     'LoadStartUp',
     secret=True,
@@ -514,7 +518,9 @@ _windowmenu.addItem(OOFMenuItem(
     'Console',
     callback=consolation,
     help="Open or raise the Python console interface.",
-    no_log=1,
+    no_log=True,
+    no_cli=True,
+    no_bar=True,
     disabled=config.nanoHUB(),  # executing arbitrary python is a
                                 # security hole on nanoHUB.
     discussion="""<para>

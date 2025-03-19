@@ -56,7 +56,7 @@ SyncMeshParameter = ooflib.engine.mesh.SyncMeshParameter
 OOF = mainmenu.OOF
 meshmenu = mainmenu.OOF.addItem(oofmenu.OOFMenuItem(
     'Mesh',
-    cli_only=1,
+    no_gui=True,
     help='Tools for creating and manipulating Meshes.',
     discussion="""<para>
     The <command>Mesh</command> menu contains tools for creating and
@@ -1531,7 +1531,8 @@ solversettingsmenu.addItem(oofmenu.OOFMenuItem(
 meshsettingsmenu.addItem(oofmenu.OOFMenuItem(
     "SelfConsistency",
     callback=_consistencyTolerance,
-    secret=1, no_doc=1, cli_only=1,
+    secret=True,
+    no_doc=True,
     params=[
         parameter.FloatParameter(
             "tolerance",

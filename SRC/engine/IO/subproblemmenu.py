@@ -47,7 +47,7 @@ subproblemMenu = mainmenu.OOF.addItem(oofmenu.OOFMenuItem(
     and &equations;, and assigning <link
     linkend="Section-Concepts-Mesh-Solvers">solvers</link>.
     </para>""",
-    cli_only=1))
+    no_gui=True))
 
 # Look for an enclosing subproblem parameter -- if not found, use the
 # enclosing mesh parameter.  SubProblem copying needs the first case,
@@ -1004,19 +1004,16 @@ _symmetryTestMenu.addItem(oofmenu.OOFMenuItem(
         'K',
         callback=_checkSymmetryK,
         params=_symTestParams,
-        help="Check K matrix symmetry.",
-        secret=True, no_doc=True))
+        help="Check K matrix symmetry."))
 
 _symmetryTestMenu.addItem(oofmenu.OOFMenuItem(
         'C',
         callback=_checkSymmetryC,
         params=_symTestParams,
-        help="Check K matrix symmetry.",
-        secret=True, no_doc=True))
+        help="Check K matrix symmetry."))
 
 _symmetryTestMenu.addItem(oofmenu.OOFMenuItem(
         'M',
         callback=_checkSymmetryM,
         params=_symTestParams,
-        help="Check K matrix symmetry.",
-        secret=True, no_doc=True))
+        help="Check K matrix symmetry."))
