@@ -398,7 +398,7 @@ class GhostGfxWindow:
         
         self.toolboxmenu = self.menu.addItem(OOFMenuItem(
             'Toolbox',
-            no_gui=True,
+            no_bar=True,
             help='Commands for the graphics toolboxes.',
             discussion=xmlmenudump.loadFile(
                 'DISCUSSIONS/common/menu/toolbox.xml')

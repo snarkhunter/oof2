@@ -125,11 +125,6 @@
 # 	        the menu item's parent.  The root menu sets all
 # 	        options to False.
 
-## TODO: Need a way of telling the GUI to not create a menuitem for a
-## submenu that is going to be in a menubar, but also not set no_gui
-## for the menuitems in the submenu.  Try setting no_gui=False in all of
-## the submenu items, if it's not already explicitly set to something?
-
 # Functions:
 
 # root():	Returns the root of the menu hierarchy.
@@ -391,9 +386,10 @@ from ooflib.common.utils import stringjoin, stringsplit
 
 # Options for menu items are given by keyword arguments in the
 # contructor.  The allowed options are listed here.  If an option is
-# not set in an item, the setting of its parent's option is used.  All
-# of these options must be set to reasonable default values in
-# OOFRootMenu.__init__().
+# not set in an item, the setting of its parent's option is used.  If
+# an item is not set, its default value is None.  If a different
+# default is required, it can be set by calling
+# OOFMenuItem.setOption() in OOFRootMenu.__init__().
 
 _allowed_options = [
     'no_gui',                 # item does not appear in GUI menus
@@ -406,17 +402,23 @@ _allowed_options = [
     'accelgroup',             # gtk accelerator group
     ]
 
+# Nonrecursive options that are set for a menu don't automatically
+# apply to its submenus.  If they need a devault value other than
+# None, call OOFMenuItem.setOption() in OOFMenuItem.__init__().
+
 _nonrecursive_options = [
     'no_bar',                 # item does not appear in menu bars
 ]
 
-# TODO: 'disabled' shouldn't be an option.  All of the other options
-# are static settings for each menu item, but 'disabled' is changed
-# dynamically.  This causes problems in xmlmenudump.dumpMenuItem,
-# which is printing 'disabled' in the documentation for every menu
-# item that happens to be disabled when the documentation is
-# generated.  However, disabling should apply to submenus and
-# submenuitems, like options do.
+# The difference between the options no_bar and no_gui is that no_bar
+# prevents a menu item from appearing in a menu bar, but no_gui
+# prevents it from appearing anywhere in the GUI.  Many menu items are
+# implemented by widgets a window's interior, and not by pull down
+# menus from the window's menu bar.  Those items should be in a
+# submenu that has no_bar==True.  There could be another submenu
+# contained in the first submenu, and the inner one might need to be
+# displayed in another menu bar, so the no_bar option is not
+# recursive.
 
 ######################################
 
@@ -569,7 +571,6 @@ class OOFMenuItem:
                 self.items[i] = item    # replace an old item
                 break
         else:
-
             # Insert the new item just before an item with a larger
             # ordering number, but not after a help_menu.
             if item.help_menu:
@@ -605,22 +606,18 @@ class OOFMenuItem:
     def add_gui_callback(self, callback):
         self.gui_callback = callback
 
-    def getOption(self, option):
-        debug.fmsg(f"**** {self.name=}")
-        if self.name == "Layer":
-            debug.fmsg(f"{option=}")
-            debug.fmsg(f"{self.nonrecursive_options=}")
-            debug.fmsg(f"{self.options=}")
+    def getOption(self, option, verbose=False):
+        if option in _nonrecursive_options:
+            # if verbose:
+            #     debug.fmsg(f"{self.name=} {option=} val={self.nonrecursive_options.get(option, None)}")
+            return self.nonrecursive_options.get(option, None)
+        assert option in _allowed_options
         try:
             return self.nonrecursive_options[option]
         except KeyError:
-            pass
-        try:
-            return self.options[option]
-        except KeyError:
             if self.parent is None:
                 return None
-            return self.parent.getOption(option)
+            return self.parent.getOption(option, verbose=verbose)
 
     def setOption(self, option, value):
         self.options[option] = value
@@ -1034,21 +1031,7 @@ debugcounter = 0
 class OOFRootMenu(OOFMenuItem):
     def __init__(self, *args, **kwargs):
         OOFMenuItem.__init__(*((self,)+args), **kwargs)
-
-        ## TODO: Why is this needed? Why is no_doc not included?
-        # if not 'no_cli' in self.options:
-        #     self.options['no_cli'] = False
-        # if not 'no_gui' in self.options:
-        #     self.options['no_gui'] = False
-        # if not 'no_log' in self.options:
-        #     self.options['no_log'] = False
-        # if not 'no_doc' in self.options:
-        #     self.options['no_doc'] = False
-##        if not 'disabled' in self.options:
-##            self.options['disabled'] = 0
-        # if not 'help_menu' in self.options:
-        #     self.options['help_menu'] = False
-            
+        
         self.logbook = []
         self.loggers = []               # additional logging functions
         self._loghalted = 0
@@ -1060,25 +1043,15 @@ class OOFRootMenu(OOFMenuItem):
     # version by returning False for any option that is missing from
     # self.options, instead of looking for it in the nonexistent
     # parent.
-    def getOption(self, option):
-        # debug.fmsg(f"****** {self.name=}")
-        # debug.fmsg(f"{option=}")
-        # debug.fmsg(f"{self.nonrecursive_options=}")
-        # debug.fmsg(f"{self.options=}")
-        try:
-            return self.nonrecursive_options[option]
-        except KeyError:
-            pass
-        try:
-            return self.options[option]
-        except KeyError as exc:
-            # debug.fmsg(f"{exc=}")
-            if (option not in _allowed_options and option not in _nonrecursive_options):
-                raise ooferror.PyErrPyProgrammingError(
-                    "Unexpected OOFMenu option: " + option)
-            ## TODO: it should be possible for the default value to be
-            ## something other than None for certain menu options.
-            return None
+    def getOption(self, option, verbose=False):
+        # if verbose:
+        #     debug.fmsg(f"ROOT {self.name=} {option=} {self.options=} {self.nonrecursive_options=}")
+        if option in _nonrecursive_options:
+            return self.nonrecursive_options.get(option, None)
+        assert option in _allowed_options
+        ## TODO: it should be possible for the default value to be
+        ## something other than None for certain menu options.
+        return self.options.get(option, None)
         
     def root(self):
         return self

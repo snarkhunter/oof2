@@ -52,7 +52,7 @@ OOF = mainmenu.OOF
 
 OOF.addItem(oofmenu.OOFMenuItem(
     'Property',
-    no_gui=True,
+    no_bar=True,
     help='Create, modify, and delete material properties.',
     discussion="""<para>
     The <command>Property</command> menu contains the basic tools for

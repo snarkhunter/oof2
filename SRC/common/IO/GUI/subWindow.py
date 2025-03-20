@@ -65,7 +65,6 @@ class SubWindow:
     # the main OOF GUI window, which from here is top().gtk, gets
     # destroyed.
     def __init__(self, title, menu=None, callback=None, guiloggable=True):
-        debug.fmsg("Creating subwindow", title)
         debug.mainthreadTest()
         self.gtk = Gtk.Window(type=Gtk.WindowType.TOPLEVEL, title=title)
         if guiloggable:
@@ -82,12 +81,11 @@ class SubWindow:
         if isinstance(menu, (str, bytes)):
             # If no menu is provided, then build a non-logging local
             # one with 'Close' and 'Quit'.
-            debug.fmsg(f"menu is a string {menu}")
             self.subwindow_menu = oofmenu.OOFMenuItem(
                 menu,
                 secret=True,
                 no_log=True,
-                # no_bar=True,
+                no_bar=True,
                 no_doc=True)
 
             file_item = oofmenu.OOFMenuItem('File',
@@ -142,11 +140,9 @@ class SubWindow:
         ## self.menu_bar = None
         self.accel_group = Gtk.AccelGroup()
         self.gtk.add_accel_group(self.accel_group)
-        debug.fmsg("Calling gtkOOFMenuBar")
         self.menu_bar = gfxmenu.gtkOOFMenuBar(
             self.subwindow_menu, accelgroup=self.accel_group,
             parentwindow=self.gtk)
-        debug.fmsg("back from gtkOOFMenuBar")
         if guiloggable:
             gtklogger.setWidgetName(self.menu_bar, "MenuBar")
 
@@ -163,7 +159,6 @@ class SubWindow:
         if callback is None:
             callback = self.destroySubWindow
         top().gtk.connect("destroy", callback)
-        debug.fmsg("done")
 
     # It is assumed, here, that if the menu bar has been destroyed,
     # the destruction of the SubWindow wrapper object is imminent,

@@ -68,7 +68,7 @@ matmanager = materialmanager.materialmanager
 
 _materialmenu = OOFMenuItem(
     'Material',
-    no_gui=True,
+    no_bar=True,
     help='Create Materials and assign them to pixels.',
     discussion="""<para>
     

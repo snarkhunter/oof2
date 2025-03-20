@@ -43,7 +43,7 @@ StringParameter = parameter.StringParameter
 
 pixgrpmenu = OOF.addItem(OOFMenuItem(
     'PixelGroup',
-    no_gui=True,
+    no_bar=True,
     help='Create and manipulate pixel groups.',
     discussion=xmlmenudump.loadFile('DISCUSSIONS/common/menu/pixelgroup.xml'),
     xrefs=["Section-MicrostructurePage-GroupPane"]

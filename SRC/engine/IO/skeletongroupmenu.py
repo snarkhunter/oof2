@@ -42,7 +42,7 @@ ElementGroupParameter = skeletongroupparams.ElementGroupParameter
 
 nodegroupmenu = oofmenu.OOFMenuItem(
     "NodeGroup",
-    no_gui=True,
+    no_bar=True,
     help='Create and manage NodeGroups.',
     xrefs=["Section-Tasks-SkeletonSelection"],
     discussion="""<para>
@@ -52,7 +52,7 @@ nodegroupmenu = oofmenu.OOFMenuItem(
 
 segmentgroupmenu = oofmenu.OOFMenuItem(
     "SegmentGroup",
-    no_gui=True,
+    no_bar=True,
     help='Create and manage SegmentGroups.',
     xrefs=["Section-Tasks-SkeletonSelection"],
     discussion="""<para>
@@ -62,7 +62,7 @@ segmentgroupmenu = oofmenu.OOFMenuItem(
 
 elementgroupmenu = oofmenu.OOFMenuItem(
     "ElementGroup",
-    no_gui=True,
+    no_bar=True,
     help='Create and manage ElementGroups.',
     xrefs=["Section-Tasks-SkeletonSelection"],
     discussion="""<para>

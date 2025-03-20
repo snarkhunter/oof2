@@ -35,7 +35,7 @@ if parallel_enable.enabled():
 
 micromenu = mainmenu.OOF.addItem(oofmenu.OOFMenuItem(
     'Microstructure',
-    no_gui=True,
+    no_bar=True,
     help="Create and manipulate &micro; objects.",
     discussion="""<para>
     Commands for creating and manipulating Microstructures.

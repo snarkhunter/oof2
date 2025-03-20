@@ -53,7 +53,7 @@ WhoNameParameter = whoville.WhoNameParameter
 
 skeletonmenu = OOF.addItem(oofmenu.OOFMenuItem(
     'Skeleton',
-    no_gui=True,
+    no_bar=True,
     help='Create and modify mesh Skeletons.',
     discussion="""<para>
     The <command>Skeleton</command> menu contains tools to create and

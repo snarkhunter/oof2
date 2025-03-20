@@ -61,21 +61,10 @@ def gtkOOFMenuBar(menu, bar=None, accelgroup=None, parentwindow=None):
         
     bar.connect("destroy", menu.gtkmenu_destroyed)
     
-    menu.setOption('accelgroup', accelgroup)
+    # menu.setOption('accelgroup', accelgroup)
 
-    debug.fmsg(f"Adding items to {menu.name}")
     for item in menu:
-        if menu.name == "Graphics_1":
-            debug.fmsg(f"adding {item.name} no_bar={item.getOption('no_bar')} o={item.options} nro={item.nonrecursive_options}")
-        # debug.fmsg(f"name={item.name} no_bar={item.getOption('no_bar')}")
-        # if not item.getOption('no_bar'):
-        #     debug.fmsg(f"Adding {item.name} to menubar {menu.name}")
-        #     debug.fmsg(f"    options={item.options} nro={item.nonrecursive_options}")
-    
         item.construct_gui(menu, bar, accelgroup)
-        # else:
-        #     debug.fmsg(f"Not adding {item.name}")
-    debug.fmsg("finished menu bar for", menu.name)
     return bar
 
 ###########################
@@ -155,14 +144,9 @@ def _OOFMenuItem_construct_gui(self, base, gtk_parent, accelgroup,
     # "base" is this menu item's OOF menu parent, and "gtk_parent" is
     # the to-be-constructed GtkMenuItem's gtk container.
     debug.mainthreadTest()
-    if base.name == "Graphics_1":
-        verbose = True
-        debug.fmsg(f"Adding {self.name} to {base.name=}. {self.nonrecursive_options=}")
-        debug.fmsg(f"{self.getOption('no_bar')=}")
-        debug.fmsg(f"{isinstance(gtk_parent, Gtk.MenuBar)}")
-        
-    if not (self.getOption('no_gui') or (self.getOption('no_bar') and
-                                        isinstance(gtk_parent, Gtk.MenuBar))):
+    if not (self.getOption('no_gui', verbose) or
+            (self.getOption('no_bar', verbose) and
+             isinstance(gtk_parent, Gtk.MenuBar))):
         new_gtkitem = Gtk.MenuItem(label=self.menuItemName()) 
         gtklogger.setWidgetName(new_gtkitem, self.name)
         try:
@@ -177,8 +161,6 @@ def _OOFMenuItem_construct_gui(self, base, gtk_parent, accelgroup,
         if (self.callback is None and self.gui_callback is None 
             and self.children_visible()):
             # Creating a submenu
-            debug.fmsg(f"Creating submenu {self.name}")
-
             new_gtkmenu = Gtk.Menu()
             try:
                 self.gtkmenu.append(new_gtkmenu)
@@ -188,9 +170,11 @@ def _OOFMenuItem_construct_gui(self, base, gtk_parent, accelgroup,
             gtklogger.set_submenu(new_gtkitem, new_gtkmenu)
             for item in self.items:
                 # recursively construct submenu
-                debug.fmsg(f"Constructing submenu for {item.name}")
-                item.construct_gui(self, new_gtkmenu, accelgroup, popup=popup, verbose=verbose)
-                debug.fmsg("Created submenu")
+                if not (item.getOption('no_gui') or
+                        isinstance(gtk_parent, Gtk.MenuBar) and
+                        item.getOption('no_bar')):
+                    item.construct_gui(self, new_gtkmenu,
+                                       accelgroup, popup=popup, verbose=verbose)
         else:                   # no submenu, create command
             gtklogger.connect(
                 new_gtkitem, 'activate', MenuCallBackWrapper(self, popup))
@@ -201,8 +185,6 @@ def _OOFMenuItem_construct_gui(self, base, gtk_parent, accelgroup,
                                             Gtk.AccelFlags.VISIBLE)
         if not self.enabled():
             new_gtkitem.set_sensitive(False)
-    else:
-        debug.fmsg(f"{self.name} not added to {base.name}")
 
 OOFMenuItem.construct_gui = _OOFMenuItem_construct_gui
 
@@ -254,10 +236,6 @@ def _newAddItem(self, item):
     return mainthread.runBlock(self.addItem_thread, (item,))
 def _addItem_thread(self, item):
     debug.mainthreadTest()
-    # if item.name == "Console":
-    #     debug.dumpTrace()
-    #     debug.fmsg(f"Adding Console, nro={item.nonrecursive_options}")
-    #     debug.fmsg(f"{self.__class__}")
     _oldAddItem(self, item)
 
     # If self is a menu bar and the item is marked "no_bar", don't add

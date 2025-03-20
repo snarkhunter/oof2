@@ -25,7 +25,7 @@ from ooflib.common.IO import xmlmenudump
 
 nodeselectmenu = mainmenu.OOF.addItem(oofmenu.OOFMenuItem(
     'NodeSelection',
-    no_gui=True,
+    no_bar=True,
     help='Select nodes in a Skeleton.',
     xrefs=["Section-Tasks-SkeletonSelection"],
     discussion="""<para>
@@ -44,7 +44,7 @@ nodeselectmenu = mainmenu.OOF.addItem(oofmenu.OOFMenuItem(
 
 segmentselectmenu = mainmenu.OOF.addItem(oofmenu.OOFMenuItem(
     'SegmentSelection',
-    no_gui=True,
+    no_bar=True,
     help='Select segments in a Skeleton.',
     xrefs=["Section-Tasks-SkeletonSelection"],
     discussion="""<para>
@@ -63,7 +63,7 @@ segmentselectmenu = mainmenu.OOF.addItem(oofmenu.OOFMenuItem(
 
 elementselectmenu = mainmenu.OOF.addItem(oofmenu.OOFMenuItem(
     'ElementSelection',
-    no_gui=True,
+    no_bar=True,
     help='Select elements in a Skeleton.',
     xrefs=["Section-Tasks-SkeletonSelection"],
     discussion="""<para>

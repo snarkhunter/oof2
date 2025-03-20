@@ -103,7 +103,7 @@ _filemenu = OOF.addItem(OOFMenuItem(
 
 _loadmenu = _filemenu.addItem(OOFMenuItem(
     'Load',
-    ordering = 0,
+    ordering=0,
     help="Commands for loading datafiles and scripts.",
     discussion="<para>Commands to load datafiles and scripts.</para>"))
 
@@ -247,7 +247,7 @@ _loadmenu.addItem(OOFMenuItem(
     threadable=oofmenu.THREADABLE,
     params=[filenameparam.ReadFileNameParameter('filename', ident="load",
                                                 tip="Name of the file.")],
-    ellipsis=1,
+    ellipsis=True,
     help="Load a data file.",
     discussion=xmlmenudump.loadFile('DISCUSSIONS/common/menu/loaddatafile.xml'),
     xrefs=["Section-Running"]
@@ -265,7 +265,8 @@ _startupmenu.addItem(OOFMenuItem(
     ))
 
 OOF.addItem(oofmenu.OOFMenuItem(
-    "LoadData", secret=1,
+    "LoadData",
+    no_bar=True,
     help="Commands used in data files.",
     discussion=xmlmenudump.loadFile('DISCUSSIONS/common/menu/loaddata.xml'),
     post_hook=None, # Don't include checkpoints in gui logs
