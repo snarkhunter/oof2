@@ -84,6 +84,7 @@
 
 # secret:       Shorthand for setting the options no_cli and no_gui to
 #               True. [default value = False].
+#               TODO: Get rid of this option.  Just use no_gui, etc.
               
 # ellipsis:     If ellipsis=True, then the item's name has '...' appended
 #               to it when displayed. [default value = False]
@@ -566,6 +567,7 @@ class OOFMenuItem:
         return newitem
                               
     def addItem(self, item):            # add a menu item to this menu
+        self.verbose = self.name == "OOF" and not item.getOption("no_bar")#and item.name == "OrientationMap"
         for i in range(len(self.items)): # see if new item replaces an old one
             if item.name == self.items[i].name:
                 self.items[i] = item    # replace an old item
@@ -576,6 +578,8 @@ class OOFMenuItem:
             if item.help_menu:
                 self.items.append(item)
             else:
+                # if self.verbose:
+                #     debug.fmsg(f"Inserting {item.name} into {self.name}")
                 for olditem in self.items:
                     if olditem.help_menu or olditem.ordering > item.ordering:
                         pos = self.items.index(olditem)
@@ -583,6 +587,8 @@ class OOFMenuItem:
                         break
                 else:
                     self.items.append(item)
+                # if self.verbose:
+                #     debug.fmsg(f"After insertion, items = {list(i.name for i in self.items)}")
         item.parent = self
         return item
 
@@ -628,20 +634,20 @@ class OOFMenuItem:
     def visible_cli(self):
         return not self.getOption('no_cli')
 
-    def visible_gui(self):
-        return not self.getOption("no_gui")
+    # def visible_gui(self):
+    #     return not self.getOption("no_gui")
 
-    def gui_order(self):
-        # Position of this menu item in a gui listing of its parent's items.
-        if self.parent is not None:
-            order = 0
-            for item in self.parent.items:
-                if item is self:
-                    return order
-                if item.visible_gui():
-                    order += 1
-        else:
-            return 0
+    # def gui_order(self):
+    #     # Position of this menu item in a gui listing of its parent's items.
+    #     if self.parent is not None:
+    #         order = 0
+    #         for item in self.parent.items:
+    #             if item is self:
+    #                 return order
+    #             if item.visible_gui():
+    #                 order += 1
+    #     else:
+    #         return 0
                     
 
     def clearMenu(self):
