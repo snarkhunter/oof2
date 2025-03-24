@@ -47,7 +47,7 @@ def gtkOOFMenu(menu, accelgroup=None, parentwindow=None):
 def gtkOOFMenuBar(menu, bar=None, accelgroup=None, parentwindow=None):
     # Function to turn an OOFMenu into a Gtk3 MenuBar.  Reuse the
     # given GtkMenuBar, if one is provided.
-    debug.fmsg("gtkOOFMenuBar")
+    # debug.fmsg("gtkOOFMenuBar")
     debug.mainthreadTest()
     menu.parentwindow = parentwindow
     if bar is not None:
@@ -63,10 +63,10 @@ def gtkOOFMenuBar(menu, bar=None, accelgroup=None, parentwindow=None):
     bar.connect("destroy", menu.gtkmenu_destroyed)
     
     # menu.setOption('accelgroup', accelgroup)
-    debug.fmsg(f"items={list(i.name for i in menu)}")
+    # debug.fmsg(f"items={list(i.name for i in menu)}")
     for item in menu:
         item.construct_gui(menu, bar, accelgroup)
-    debug.fmsg("gtkOOFMenuBar: done")
+    # debug.fmsg("gtkOOFMenuBar: done")
     return bar
 
 ###########################
@@ -140,14 +140,19 @@ OOFMenuItem.menuItemName = _menuItemName
 
 # Position of this menu item in a gui listing of its parent's items.
 
-def _OOFMenuItem_gui_order(self):
+def _OOFMenuItem_gui_order(self, gtk_parent):
     if self.parent is None:
         return 0
     order = 0
+    # if self.verbose:
+    #     debug.fmsg(f"Computing position of {self.name} in {self.parent.name}")
+    #     debug.fmsg(f"Existing options are {[(i.name, i.visible_gui(self.parent)) for i in self.parent.items]}")
     for item in self.parent.items:
         if item is self:
+            # if self.verbose:
+            #     debug.fmsg(f"Found {self.name} at {order}")
             return order
-        if item.visible_gui(self.parent):
+        if item.visible_gui(gtk_parent, self.verbose):
             order += 1
     raise ooferror.PyErrPyProgrammingError(
         "OOFMenuItem::gui_order: object not found in parent")
@@ -156,10 +161,13 @@ OOFMenuItem.gui_order = _OOFMenuItem_gui_order
 
 # Is this menu item visible in a menu?
 
-def _OOFMenuItem_visible_gui(self, gtkparent):
+def _OOFMenuItem_visible_gui(self, gtk_parent, verbose=False):
+    # Somehow gtk_parent is an OOFMenuItem but it's supposed to be a Gtk object
+    # if verbose:
+    #     debug.fmsg(f"{self.path()} no_gui={self.getOption('no_gui')} no_bar={self.getOption('no_bar')} {isinstance(gtk_parent,Gtk.MenuBar)=} {type(gtk_parent)}")
     return not (self.getOption('no_gui') or
                 (self.getOption('no_bar') and
-                 isinstance(gtkparent, Gtk.MenuBar)))
+                 isinstance(gtk_parent, Gtk.MenuBar)))
 
 OOFMenuItem.visible_gui = _OOFMenuItem_visible_gui
 
@@ -180,7 +188,7 @@ OOFMenuItem.children_visible = _OOFMenuItem_children_visible
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
     
 def _OOFMenuItem_construct_gui(self, base, gtk_parent, accelgroup,
-                               popup=False, verbose=False):
+                               popup=False):
     # "base" is this menu item's OOF menu parent, and "gtk_parent" is
     # the to-be-constructed GtkMenuItem's gtk container.
     debug.mainthreadTest()
@@ -194,7 +202,7 @@ def _OOFMenuItem_construct_gui(self, base, gtk_parent, accelgroup,
             
         new_gtkitem.connect("destroy", self.gtkitem_destroyed)
 
-        gtk_parent.insert(new_gtkitem, self.gui_order())
+        gtk_parent.insert(new_gtkitem, self.gui_order(gtk_parent))
 
         if (self.callback is None and self.gui_callback is None 
             and self.children_visible()):
@@ -212,7 +220,7 @@ def _OOFMenuItem_construct_gui(self, base, gtk_parent, accelgroup,
                         isinstance(gtk_parent, Gtk.MenuBar) and
                         item.getOption('no_bar')):
                     item.construct_gui(self, new_gtkmenu,
-                                       accelgroup, popup=popup, verbose=verbose)
+                                       accelgroup, popup=popup)
         else:                   # no submenu, create command
             gtklogger.connect(
                 new_gtkitem, 'activate', MenuCallBackWrapper(self, popup))
@@ -275,27 +283,27 @@ def _newAddItem(self, item):
 def _addItem_thread(self, item):
     debug.mainthreadTest()
     _oldAddItem(self, item) # inserts item in the correct spot in self.items
-    if self.verbose:
-        debug.fmsg(f"{self=}")
-        debug.fmsg(f"Adding {item.name} to {self.name}")
+    # if self.verbose:
+    #     debug.fmsg(f"{self=}")
+    #     debug.fmsg(f"Adding {item.name} to {self.name}")
 
     # Check to see if the gui has been constructed yet. The gui
     # objects for the root of the menu have gtkmenu attributes, but
     # not gtkitem attributes.  Other nodes of the tree have gtkitem,
     # but may not have gtkmenu, so it's necessary to check for both.
 
-    if self.verbose:
-        if hasattr(self, 'gtkitem') and hasattr(self, 'gtkmenu'):
-            debug.fmsg(f"{self.gtkitem=} {self.gtkmenu=}")
-        elif hasattr(self, 'gtkitem'):
-            debug.fmsg(f"{self.gtkitem=}")
-        elif hasattr(self, 'gtkmenu'):
-            debug.fmsg(f"{self.gtkmenu=}")
+    # if self.verbose:
+    #     if hasattr(self, 'gtkitem') and hasattr(self, 'gtkmenu'):
+    #         debug.fmsg(f"{self.gtkitem=} {self.gtkmenu=}")
+    #     elif hasattr(self, 'gtkitem'):
+    #         debug.fmsg(f"{self.gtkitem=}")
+    #     elif hasattr(self, 'gtkmenu'):
+    #         debug.fmsg(f"{self.gtkmenu=}")
     
     if ((hasattr(self, 'gtkitem') or hasattr(self, 'gtkmenu')) and 
         self.children_visible()):
-        if self.verbose:
-            debug.fmsg(f"Making GUI for {item.name}")
+        # if self.verbose:
+        #     debug.fmsg(f"Making GUI for {item.name}")
         # We've been guied, so gui the new children, if they're visible.
         if not hasattr(self, 'gtkmenu'):
             # Make a gtkmenu for each gtkitem.
@@ -351,7 +359,7 @@ class CheckMenuCallBackWrapper(MenuCallBackWrapper):
         return self.menuitem(active)
 
 def _CheckOOFMenuItem_construct_gui(self, base, gtk_parent, accelgroup,
-                                    popup=False, verbose=False):
+                                    popup=False):
     debug.mainthreadTest()
     if not self.getOption('no_gui'):
         new_gtkitem = Gtk.CheckMenuItem(label=self.menuItemName())
@@ -384,7 +392,7 @@ def _CheckOOFMenuItem_construct_gui(self, base, gtk_parent, accelgroup,
         if not self.enabled():
             new_gtkitem.set_sensitive(False)
 
-        gtk_parent.insert(new_gtkitem, self.gui_order())
+        gtk_parent.insert(new_gtkitem, self.gui_order(gtk_parent))
 
 CheckOOFMenuItem.construct_gui = _CheckOOFMenuItem_construct_gui
 
@@ -431,7 +439,7 @@ class RadioMenuCallBackWrapper(CheckMenuCallBackWrapper):
 
 
 def _RadioOOFMenuItem_construct_gui(self, base, gtk_parent, accelgroup,
-                                    popup=False, verbose=False):
+                                    popup=False):
     debug.mainthreadTest()
 
     new_gtkitem = Gtk.RadioMenuItem(self.menuItemName())
