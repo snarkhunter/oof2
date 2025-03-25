@@ -230,6 +230,8 @@ def _OOFMenuItem_construct_gui(self, base, gtk_parent, accelgroup,
                                             Gdk.ModifierType.CONTROL_MASK,
                                             Gtk.AccelFlags.VISIBLE)
         if not self.enabled():
+            if self.verbose:
+                debug.fmsg(f"Desensitizing {self.path()}")
             new_gtkitem.set_sensitive(False)
 
 OOFMenuItem.construct_gui = _OOFMenuItem_construct_gui
@@ -495,9 +497,21 @@ RadioOOFMenuItem.__call__ = _RadioOOFMenuItem___call__
 
 ###################################################
 
-# Redefine 'enable' and 'disable' so that the menus are grayed out.
+# Redefine OOFMenuItem.enable() and OOFMenuItem.disable() so that the
+# menus are grayed out.
+
+# A menu item that has been explicitly disabled via
+# OOFMenuItem.disable() should always be insensitive, as should its
+# submenu items.  OOFMenuItem.getOption('disabled') says or not an
+# item has been explicitly disabled.
+
+# A menu item that has not been explicitly disabled will still be
+# insensitive if it has no enabled children.
 
 def _sensitize_gui(self, sensitive):
+    if sensitive and self.path() == "OOF.OrientationMap":
+        debug.fmsg(f"{sensitive=}")
+        debug.dumpTrace()
     mainthread.runBlock(self.sensitize_gui_thread, (sensitive,))
 
 def _sensitize_gui_thread(self, sensitive):
@@ -505,13 +519,7 @@ def _sensitize_gui_thread(self, sensitive):
     if hasattr(self, "gtkitem"):
         for i in self.gtkitem:
             i.set_sensitive(sensitive)
-    # try:
-    #     itemlist = self.gtkitem
-    # except AttributeError:
-    #     pass
-    # else:
-    #     for i in itemlist:
-    #         i.set_sensitive(sensitive)
+
 OOFMenuItem.sensitize_gui = _sensitize_gui
 OOFMenuItem.sensitize_gui_thread = _sensitize_gui_thread
 
@@ -521,16 +529,21 @@ def _OOFMenuItem_disable(self):
 def disable_thread(self):
     debug.mainthreadTest()
     _old_disable(self)
-    self.sensitize_gui(0)
+    self.sensitize_gui(False)
 OOFMenuItem.disable = _OOFMenuItem_disable
 OOFMenuItem.disable_thread = disable_thread
 
 def _enable_children(self):
+    debug.fmsg(f"Enabling children: {self.path()}")
     debug.mainthreadTest()
     if self.enabled():
-        self.sensitize_gui(1)
+        self.sensitize_gui(True)
         for item in self.items:
             item.enable_children()
+    else:
+        self.sensitize_gui(False)
+        for item in self.items:
+            item.disable_children()
 OOFMenuItem.enable_children = _enable_children
 
 def _enable_parent_gui(self):
@@ -543,6 +556,7 @@ OOFMenuItem.enable_parent_gui = _enable_parent_gui
 
 _old_enable = OOFMenuItem.enable
 def _OOFMenuItem_enable(self):
+    debug.fmsg(f"Enabling {self.path()}")
     _old_enable(self)
     mainthread.runBlock(self.enable_children)
 OOFMenuItem.enable = _OOFMenuItem_enable
