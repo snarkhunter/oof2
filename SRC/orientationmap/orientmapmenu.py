@@ -318,11 +318,9 @@ def _sensitize(path):
     if msclass and msclass.nActual() > 0:
         orientmapmenu.enable()
         mainmenu.OOF.File.Load.OrientationMap.enable()
-        debug.fmsg("Enabled OrientationMap menu")            
     else:
         orientmapmenu.disable()
         mainmenu.OOF.File.Load.OrientationMap.disable()
-        debug.fmsg("Disabled OrientationMap menu")
 
 _sensitize(None)
 

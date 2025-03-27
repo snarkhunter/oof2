@@ -472,6 +472,7 @@ class OOFMenuItem:
                  help=None,             # string describing command
                  discussion=None,       # for manual, in docbook xml
                  xrefs=None,            # cross references for manual
+                 verbose=False,         # for debugging
                  threadable = THREADABLE,     # MenuItem is threaded if it receives a ThreadType object different from UNTHREADABLE
                  params=[],             # list of Parameter args for callback
                  ordering=0,
@@ -484,7 +485,7 @@ class OOFMenuItem:
             for char in name[1:]:
                 if not (char.isalpha() or char.isdigit() or char == '_'):
                     raise NameError("Illegal name for menu item: " + name)
-        
+
         self.name = name
         self.parent = None              # reset in OOFMenu.addItem()
         self.accel = accel              # keyboard accelerator
@@ -498,6 +499,7 @@ class OOFMenuItem:
         self.helpstr = help
         self.discussion = discussion
         self.alphabetize = alphabetize
+        self.verbose = verbose
         # The default value for xrefs in the __init__ args must be
         # None, and not [].  If it were [], then all menu items that
         # have no xrefs would share an empty list, and if any of the
@@ -522,7 +524,8 @@ class OOFMenuItem:
         # bar_name is the string representing the menu item in
         # progress bars.  It's set when the menu item is called.
         self.bar_name = None
-        
+
+        self.debug = False
         
         # additional options
         if secret:
@@ -553,6 +556,7 @@ class OOFMenuItem:
             params = parameter.ParameterGroup(*params)
         newitem = self.__class__(name=name or self.name,
                                  callback=self.callback,
+                                 verbose=self.verbose,
                                  gui_callback=self.gui_callback,
                                  accel=self.accel,
                                  ellipsis=self.ellipsis,
@@ -567,7 +571,6 @@ class OOFMenuItem:
         return newitem
                               
     def addItem(self, item):            # add a menu item to this menu
-        self.verbose = self.name == "OOF" and not item.getOption("no_bar")#and item.name == "OrientationMap"
         for i in range(len(self.items)): # see if new item replaces an old one
             if item.name == self.items[i].name:
                 self.items[i] = item    # replace an old item
@@ -578,8 +581,6 @@ class OOFMenuItem:
             if item.help_menu:
                 self.items.append(item)
             else:
-                # if self.verbose:
-                #     debug.fmsg(f"Inserting {item.name} into {self.name}")
                 for olditem in self.items:
                     if olditem.help_menu or olditem.ordering > item.ordering:
                         pos = self.items.index(olditem)
@@ -587,8 +588,6 @@ class OOFMenuItem:
                         break
                 else:
                     self.items.append(item)
-                # if self.verbose:
-                #     debug.fmsg(f"After insertion, items = {list(i.name for i in self.items)}")
         item.parent = self
         return item
 
@@ -612,43 +611,28 @@ class OOFMenuItem:
     def add_gui_callback(self, callback):
         self.gui_callback = callback
 
-    def getOption(self, option, verbose=False):
+    def getOption(self, option):
         if option in _nonrecursive_options:
-            # if verbose:
-            #     debug.fmsg(f"{self.name=} {option=} val={self.nonrecursive_options.get(option, None)}")
             return self.nonrecursive_options.get(option, None)
         assert option in _allowed_options
         try:
-            return self.nonrecursive_options[option]
+            return self.options[option]
         except KeyError:
             if self.parent is None:
                 return None
-            return self.parent.getOption(option, verbose=verbose)
+            return self.parent.getOption(option)
 
     def setOption(self, option, value):
         self.options[option] = value
 
     def removeOption(self, option):
-        del self.options[option]
+        try:
+            del self.options[option]
+        except KeyError:
+            pass
 
     def visible_cli(self):
         return not self.getOption('no_cli')
-
-    # def visible_gui(self):
-    #     return not self.getOption("no_gui")
-
-    # def gui_order(self):
-    #     # Position of this menu item in a gui listing of its parent's items.
-    #     if self.parent is not None:
-    #         order = 0
-    #         for item in self.parent.items:
-    #             if item is self:
-    #                 return order
-    #             if item.visible_gui():
-    #                 order += 1
-    #     else:
-    #         return 0
-                    
 
     def clearMenu(self):
         self.callback = None
@@ -706,25 +690,25 @@ class OOFMenuItem:
 
 
     # disable() and enable() are called when it's necessary to
-    # explicitly disable or enable a menu item.  Menu items are
-    # *automatically* disabled if they don't have either a callback or
-    # submenus.  The 'disabled' option only reflects the explicit
-    # state, but the 'enabled()' function takes into account the
-    # existance of callbacks and submenus.
+    # explicitly disable or enable a menu item.  They set or clear the
+    # 'disabled' option.  The disabled() and enabled() methods don't
+    # just check the option, but also check that a menu has enabled
+    # submenus, and menu items have an enabled callback.
     
     def disable(self):
-        self.options['disabled'] = 1
+        self.setOption('disabled', True)
 
     def enable(self):
-        try:
-            del self.options['disabled']
-        except KeyError:
-            pass
+        self.setOption('disabled', False)
+
+    def disabled(self):
+        return (self.getOption('disabled') or
+                (self.callback is None and self.gui_callback is None and
+                 (self.items and all(x.disabled() for x in self.items))))
 
     def enabled(self):
-        return (not self.getOption('disabled')) and \
-               (self.items or self.callback or self.gui_callback)
-    
+        return not self.disabled()
+
     ################################
     #
     # Invocation functions.
@@ -1049,9 +1033,7 @@ class OOFRootMenu(OOFMenuItem):
     # version by returning False for any option that is missing from
     # self.options, instead of looking for it in the nonexistent
     # parent.
-    def getOption(self, option, verbose=False):
-        # if verbose:
-        #     debug.fmsg(f"ROOT {self.name=} {option=} {self.options=} {self.nonrecursive_options=}")
+    def getOption(self, option):
         if option in _nonrecursive_options:
             return self.nonrecursive_options.get(option, None)
         assert option in _allowed_options

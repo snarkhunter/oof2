@@ -534,9 +534,7 @@ reporter._new_messages = MessageWindow
 def _auto_open(message_tuple):
     global _message_window_auto_open
     if _message_window_auto_open and len(allMessageWindows)==0:
-        debug.fmsg("Opening MessageWindow")
         MessageWindow()
-        debug.fmsg("Done opening MessageWindow")
 
 switchboard.requestCallbackMain("write message", _auto_open)
 
